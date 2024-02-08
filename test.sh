@@ -17,6 +17,7 @@ assert() {
   fi
 }
 
+trap 'rm -f tmp tmp.s' EXIT
 
 pnpm run build
 
