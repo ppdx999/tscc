@@ -4,8 +4,6 @@ assert() {
   expected="$1"
   input="$2"
 
-	pnpm run build
-
 	node build/src/main.js "$input" > tmp.s
   cc -o tmp tmp.s
   ./tmp
@@ -18,6 +16,9 @@ assert() {
     exit 1
   fi
 }
+
+
+pnpm run build
 
 assert 0 0
 assert 42 42
