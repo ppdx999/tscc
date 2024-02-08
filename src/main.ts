@@ -9,13 +9,13 @@ const TokenKind = {
 
 type TokenKind = typeof TokenKind[keyof typeof TokenKind];
 
+
 type Token = {
 	kind: TokenKind;
 	value: string;
 	next: Token | null | undefined;
 	str: string;
 };
-
 
 let token: Token | null | undefined = null;
 
@@ -86,7 +86,7 @@ function tokenize(str: string): Token | null | undefined {
 			continue;
 		}
 
-		if (str[p] === '+' || str[p] === '-') {
+		if (['+', '-', '*', '/', '(', ')'].includes(str[p])) {
 			cur = newToken(TokenKind.Reserved, cur, str[p]);
 			p++;
 			continue;
@@ -108,6 +108,118 @@ function tokenize(str: string): Token | null | undefined {
 	return head.next;
 }
 
+
+/*
+ * expr = mul ("+" mul | "-" mul)*
+ * mul = primary ("*" primary | "/" primary)*
+ * primary = num | "(" expr ")"
+ * num = [0-9]+
+ */
+
+const NodeKind = {
+	Add: auto(),
+	Sub: auto(),
+	Mul: auto(),
+	Div: auto(),
+	Num: auto(),
+};
+
+type NodeKind = typeof NodeKind[keyof typeof NodeKind];
+
+type Node = {
+	kind: NodeKind;
+	lhs: Node | null | undefined;
+	rhs: Node | null | undefined;
+	val: number;
+};
+
+function newNode(kind: NodeKind, lhs: Node | null | undefined, rhs: Node | null | undefined, val: number): Node {
+	return {
+		kind,
+		lhs,
+		rhs,
+		val
+	};
+}
+
+function newNodeNum(val: number): Node {
+	return {
+		kind: NodeKind.Num,
+		lhs: null,
+		rhs: null,
+		val
+	};
+}
+
+function expr(): Node {
+	let node = mul();
+	for (;;) {
+		if (consume('+')) {
+			node = newNode(NodeKind.Add, node, mul(), 0);
+		} else if (consume('-')) {
+			node = newNode(NodeKind.Sub, node, mul(), 0);
+		} else {
+			return node;
+		}
+	}
+}
+
+function mul(): Node {
+	let node = primary();
+	for (;;) {
+		if (consume('*')) {
+			node = newNode(NodeKind.Mul, node, primary(), 0);
+		} else if (consume('/')) {
+			node = newNode(NodeKind.Div, node, primary(), 0);
+		} else {
+			return node;
+		}
+	}
+}
+
+function primary(): Node {
+	if (consume('(')) {
+		const node = expr();
+		expect(')');
+		return node;
+	}
+	return newNodeNum(expectNum());
+}
+
+
+function gen(node: Node | undefined | null): void {
+	if (node === null || node === undefined) return;
+
+	if (node.kind === NodeKind.Num) {
+		console.log(`	push ${node.val}`);
+		return;
+	}
+
+	gen(node.lhs);
+	gen(node.rhs);
+
+	console.log('	pop rdi');
+	console.log('	pop rax');
+
+	switch (node.kind) {
+		case NodeKind.Add:
+			console.log('	add rax, rdi');
+			break;
+		case NodeKind.Sub:
+			console.log('	sub rax, rdi');
+			break;
+		case NodeKind.Mul:
+			console.log('	imul rax, rdi');
+			break;
+		case NodeKind.Div:
+			console.log('	cqo');
+			console.log('	idiv rdi');
+			break;
+	}
+
+	console.log('	push rax');
+}
+
 function main(args: string[]): void {
 	if (args.length !== 1) {
 		console.error('Invalid number of arguments');
@@ -115,22 +227,15 @@ function main(args: string[]): void {
 	}
 
 	token = tokenize(args[0]);
+	const node = expr();
+	
 	console.log('.intel_syntax noprefix');
 	console.log('.global main');
 	console.log('main:');
-	console.log(` mov rax, ${expectNum()}`);
 
-	while (!atEof()) {
-		if (consume('+')) {
-			console.log(` add rax, ${expectNum()}`);
-			continue;
-		}
-		if (consume('-')) {
-			console.log(` sub rax, ${expectNum()}`);
-			continue;
-		}
-		error('Unexpected token');
-	}
+	gen(node);
+
+	console.log('	pop rax');
 	console.log('	ret');
 }
 
