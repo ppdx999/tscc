@@ -15,12 +15,16 @@ type Token = {
 	value: string;
 	next: Token | null | undefined;
 	str: string;
+  pos: number;
 };
 
 let token: Token | null | undefined = null;
+let userInput = '';
 
 function error(...args: any[]) {
-	console.error(...args);
+  console.error(userInput);
+  console.error(' '.repeat(token?.pos as number) + '^', ...args);
+
 	process.exit(1);
 }
 
@@ -59,12 +63,13 @@ function atEof(): boolean {
 	return token?.kind === TokenKind.EOF;
 }
 
-function newToken(kind: TokenKind, cur: Token | null | undefined, str: string): Token {
+function newToken(kind: TokenKind, cur: Token | null | undefined, str: string, pos: number): Token {
 	const token: Token = {
 		kind,
 		value: str,
 		next: null,
-		str
+		str,
+    pos,
 	};
 	if (cur) cur.next = token;
 	return token;
@@ -75,7 +80,8 @@ function tokenize(str: string): Token | null | undefined {
 		kind: TokenKind.Reserved,
 		value: '',
 		next: null,
-		str: ''
+		str: '',
+    pos: 0,
 	};
 	let cur = head;
 
@@ -87,24 +93,25 @@ function tokenize(str: string): Token | null | undefined {
 		}
 
 		if (['+', '-', '*', '/', '(', ')'].includes(str[p])) {
-			cur = newToken(TokenKind.Reserved, cur, str[p]);
+			cur = newToken(TokenKind.Reserved, cur, str[p], p);
 			p++;
 			continue;
 		}
 
 		if (isNumber(str[p])) {
 			let num = '';
+      let pos = p;
 			while (isNumber(str[p])) {
 				num += str[p];
 				p++;
 			}
-			cur = newToken(TokenKind.Num, cur, num);
+			cur = newToken(TokenKind.Num, cur, num, pos);
 			continue;
 		}
 
 		error(`Invalid token: ${str[p]}`);
 	}
-	cur = newToken(TokenKind.EOF, cur, '');
+	cur = newToken(TokenKind.EOF, cur, '', p);
 	return head.next;
 }
 
@@ -182,7 +189,7 @@ function unary(): Node {
   if (consume('+'))
     return unary();
   if (consume('-'))
-    return newNode(NodeKind.Sub, newNodeNum(0), unary(), 0);
+    return newNode(NodeKind.Sub, newNodeNum(0), primary(), 0);
   return primary();
   }
 
@@ -235,7 +242,8 @@ function main(args: string[]): void {
 		process.exit(1);
 	}
 
-	token = tokenize(args[0]);
+  userInput = args[0];
+	token = tokenize(userInput);
 	const node = expr();
 	
 	console.log('.intel_syntax noprefix');
