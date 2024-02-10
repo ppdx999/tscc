@@ -92,7 +92,19 @@ function tokenize(str: string): Token | null | undefined {
 			continue;
 		}
 
-		if (['+', '-', '*', '/', '(', ')'].includes(str[p])) {
+    if (
+      str.startsWith('==', p) ||
+      str.startsWith('!=', p) ||
+      str.startsWith('<=', p) ||
+      str.startsWith('>=', p)
+    ) {
+      cur = newToken(TokenKind.Reserved, cur, str.slice(p, p + 2), p);
+      p += 2;
+      continue;
+    }
+
+
+		if (['+', '-', '*', '/', '(', ')', '<', '>'].includes(str[p])) {
 			cur = newToken(TokenKind.Reserved, cur, str[p], p);
 			p++;
 			continue;
@@ -117,11 +129,14 @@ function tokenize(str: string): Token | null | undefined {
 
 
 /*
- * expr    = mul ("+" mul | "-" mul)*
- * mul     = primary ("*" primary | "/" primary)*
- * unary   = "+"? primary | "-" primary
- * primary = num | "(" expr ")"
- * num     = [0-9]+
+ * expr       = equality
+ * equality   = relational ("==" relational | "!=" relational)*
+ * relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+ * add        = mul ("+" mul | "-" mul)*
+ * mul        = primary ("*" primary | "/" primary)*
+ * unary      = "+"? primary | "-" primary
+ * primary    = num | "(" expr ")"
+ * num        = [0-9]+
  */
 
 const NodeKind = {
@@ -130,6 +145,10 @@ const NodeKind = {
 	Mul: auto(),
 	Div: auto(),
 	Num: auto(),
+  Eq: auto(),
+  Ne: auto(),
+  Lt: auto(),
+  Le: auto(),
 };
 
 type NodeKind = typeof NodeKind[keyof typeof NodeKind];
@@ -160,16 +179,50 @@ function newNodeNum(val: number): Node {
 }
 
 function expr(): Node {
-	let node = mul();
-	for (;;) {
-		if (consume('+')) {
-			node = newNode(NodeKind.Add, node, mul(), 0);
-		} else if (consume('-')) {
-			node = newNode(NodeKind.Sub, node, mul(), 0);
-		} else {
-			return node;
-		}
-	}
+  return equality();
+}
+
+function equality(): Node {
+  let node = relational();
+  for (;;) {
+    if (consume('==')) {
+      node = newNode(NodeKind.Eq, node, relational(), 0);
+    } else if (consume('!=')) {
+      node = newNode(NodeKind.Ne, node, relational(), 0);
+    } else {
+      return node;
+    }
+  }
+}
+
+function relational(): Node {
+  let node = add();
+  for (;;) {
+    if (consume('<')) {
+      node = newNode(NodeKind.Lt, node, add(), 0);
+    } else if (consume('<=')) {
+      node = newNode(NodeKind.Le, node, add(), 0);
+    } else if (consume('>')) {
+      node = newNode(NodeKind.Lt, add(), node, 0);
+    } else if (consume('>=')) {
+      node = newNode(NodeKind.Le, add(), node, 0);
+    } else {
+      return node;
+    }
+  }
+}
+
+function add(): Node {
+  let node = mul();
+  for (;;) {
+    if (consume('+')) {
+      node = newNode(NodeKind.Add, node, mul(), 0);
+    } else if (consume('-')) {
+      node = newNode(NodeKind.Sub, node, mul(), 0);
+    } else {
+      return node;
+    }
+  }
 }
 
 function mul(): Node {
@@ -189,7 +242,7 @@ function unary(): Node {
   if (consume('+'))
     return unary();
   if (consume('-'))
-    return newNode(NodeKind.Sub, newNodeNum(0), primary(), 0);
+    return newNode(NodeKind.Sub, newNodeNum(0), unary(), 0);
   return primary();
   }
 
@@ -231,6 +284,26 @@ function gen(node: Node | undefined | null): void {
 			console.log('	cqo');
 			console.log('	idiv rdi');
 			break;
+    case NodeKind.Eq:
+      console.log('	cmp rax, rdi');
+      console.log('	sete al');
+      console.log('	movzb rax, al');
+      break;
+    case NodeKind.Ne:
+      console.log('	cmp rax, rdi');
+      console.log('	setne al');
+      console.log('	movzb rax, al');
+    break;
+    case NodeKind.Lt:
+      console.log('	cmp rax, rdi');
+      console.log('	setl al');
+      console.log('	movzb rax, al');
+    break;
+    case NodeKind.Le:
+      console.log('	cmp rax, rdi');
+      console.log('	setle al');
+      console.log('	movzb rax, al');
+    break;
 	}
 
 	console.log('	push rax');
