@@ -110,10 +110,11 @@ function tokenize(str: string): Token | null | undefined {
 
 
 /*
- * expr = mul ("+" mul | "-" mul)*
- * mul = primary ("*" primary | "/" primary)*
+ * expr    = mul ("+" mul | "-" mul)*
+ * mul     = primary ("*" primary | "/" primary)*
+ * unary   = "+"? primary | "-" primary
  * primary = num | "(" expr ")"
- * num = [0-9]+
+ * num     = [0-9]+
  */
 
 const NodeKind = {
@@ -165,17 +166,25 @@ function expr(): Node {
 }
 
 function mul(): Node {
-	let node = primary();
+	let node = unary();
 	for (;;) {
 		if (consume('*')) {
-			node = newNode(NodeKind.Mul, node, primary(), 0);
+			node = newNode(NodeKind.Mul, node, unary(), 0);
 		} else if (consume('/')) {
-			node = newNode(NodeKind.Div, node, primary(), 0);
+			node = newNode(NodeKind.Div, node, unary(), 0);
 		} else {
 			return node;
 		}
 	}
 }
+
+function unary(): Node {
+  if (consume('+'))
+    return unary();
+  if (consume('-'))
+    return newNode(NodeKind.Sub, newNodeNum(0), unary(), 0);
+  return primary();
+  }
 
 function primary(): Node {
 	if (consume('(')) {
