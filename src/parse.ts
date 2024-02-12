@@ -63,7 +63,6 @@ function stmt() {
     node.lhs = expr();
     expect(';');
     return node;
-  return node;
   } else if (consumeIf()) {
     node = newNode(NodeKind.If);
     expect('(');
