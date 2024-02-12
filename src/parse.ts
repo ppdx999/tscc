@@ -32,6 +32,13 @@ export type Node = {
 };
 
 
+export type Lvar = {
+  name: string;
+  offset: number;
+  next: Lvar | null | undefined;
+};
+
+
 // ---------------------------------------------------------------------
 // Recursive descent parser
 // ---------------------------------------------------------------------
@@ -56,7 +63,7 @@ function expr(): Node {
 function assign(): Node {
   let node = equality();
   if (consume('='))
-    node = newBinary(NodeKind.Assign, node, assign());
+    node = newNodeBinary(NodeKind.Assign, node, assign());
   return node;
 }
 
@@ -64,9 +71,9 @@ function equality(): Node {
   let node = relational();
   for (;;) {
     if (consume('==')) {
-      node = newBinary(NodeKind.Eq, node, relational());
+      node = newNodeBinary(NodeKind.Eq, node, relational());
     } else if (consume('!=')) {
-      node = newBinary(NodeKind.Ne, node, relational());
+      node = newNodeBinary(NodeKind.Ne, node, relational());
     } else {
       return node;
     }
@@ -77,13 +84,13 @@ function relational(): Node {
   let node = add();
   for (;;) {
     if (consume('<')) {
-      node = newBinary(NodeKind.Lt, node, add());
+      node = newNodeBinary(NodeKind.Lt, node, add());
     } else if (consume('<=')) {
-      node = newBinary(NodeKind.Le, node, add());
+      node = newNodeBinary(NodeKind.Le, node, add());
     } else if (consume('>')) {
-      node = newBinary(NodeKind.Lt, add(), node);
+      node = newNodeBinary(NodeKind.Lt, add(), node);
     } else if (consume('>=')) {
-      node = newBinary(NodeKind.Le, add(), node);
+      node = newNodeBinary(NodeKind.Le, add(), node);
     } else {
       return node;
     }
@@ -94,9 +101,9 @@ function add(): Node {
   let node = mul();
   for (;;) {
     if (consume('+')) {
-      node = newBinary(NodeKind.Add, node, mul());
+      node = newNodeBinary(NodeKind.Add, node, mul());
     } else if (consume('-')) {
-      node = newBinary(NodeKind.Sub, node, mul());
+      node = newNodeBinary(NodeKind.Sub, node, mul());
     } else {
       return node;
     }
@@ -107,9 +114,9 @@ function mul(): Node {
 	let node = unary();
 	for (;;) {
 		if (consume('*')) {
-			node = newBinary(NodeKind.Mul, node, unary());
+			node = newNodeBinary(NodeKind.Mul, node, unary());
 		} else if (consume('/')) {
-			node = newBinary(NodeKind.Div, node, unary());
+			node = newNodeBinary(NodeKind.Div, node, unary());
 		} else {
 			return node;
 		}
@@ -120,7 +127,7 @@ function unary(): Node {
   if (consume('+'))
     return unary();
   if (consume('-'))
-    return newBinary(NodeKind.Sub, newNum(0), unary());
+    return newNodeBinary(NodeKind.Sub, newNodeNum(0), unary());
   return primary();
   }
 
@@ -132,9 +139,15 @@ function primary(): Node {
 	}
 
   const token = consumeIdent()
-  if(token)
-    return newLvar(token.str)
-	return newNum(expectNum());
+  if(token) {
+    const node = newNodeLvar(token.str)
+    let lvar = findLvar(token.str);
+    if (!lvar) lvar = newLvar(token.str);
+    node.offset = lvar.offset;
+    return node;
+  }
+
+	return newNodeNum(expectNum());
 }
 
 
@@ -188,21 +201,38 @@ function newNode(kind: NodeKind): Node {
 	};
 }
 
-function newBinary(kind: NodeKind, lhs: Node | null | undefined, rhs: Node | null | undefined): Node {
+function newNodeBinary(kind: NodeKind, lhs: Node | null | undefined, rhs: Node | null | undefined): Node {
   const node = newNode(kind);
   node.lhs = lhs;
   node.rhs = rhs;
   return node;
 }
 
-function newNum(val: number): Node {
+function newNodeNum(val: number): Node {
   const node = newNode(NodeKind.Num);
   node.val = val;
   return node;
 }
 
-function newLvar(name: string) {
+function newNodeLvar(name: string) {
   const node = newNode(NodeKind.Lvar);
   node.name = name;
   return node;
+}
+
+function newLvar(name: string): Lvar {
+  const newLvar: Lvar = {
+    name,
+    offset: (global?.locals?.offset ?? 0) + 8,
+    next: global.locals,
+  };
+  global.locals = newLvar;
+  return newLvar;
+}
+
+function findLvar(name: string): Lvar | null | undefined {
+  for (let var_ = global.locals; var_; var_ = var_.next) {
+    if (var_.name === name) return var_;
+  }
+  return null;
 }

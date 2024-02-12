@@ -36,7 +36,7 @@ function main(args: string[]): void {
   console.log('# prologue main -- start')
   console.log('	push rbp');
   console.log('	mov rbp, rsp');
-  console.log('	sub rsp, 208');
+  console.log(`	sub rsp, ${global.locals?.offset ?? 0}`)
   console.log('# prologue main -- end')
 
   for (let i = 0; global.nodes[i]; i++) {

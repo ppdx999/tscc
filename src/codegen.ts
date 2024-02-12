@@ -1,20 +1,12 @@
 import { Node, NodeKind } from './parse.js';
-import { error } from './util.js';
-
-const calcOffset = (char: string) => {
-  const idx = char.charCodeAt(0) - 'a'.charCodeAt(0) + 1;
-  return idx * 8;
-}
-  
 
 // Pushes the given node's address to the stack.
 function genLval(node: Node | null | undefined) {
   if (node?.kind == NodeKind.Lvar) {
     if (!node.name) throw new Error('node.name is null');
 
-    const offset = calcOffset(node.name);
     console.log('	mov rax, rbp');
-    console.log(`	sub rax, ${offset}`);
+    console.log(`	sub rax, ${node.offset}`);
     console.log('	push rax');
   }
 }
