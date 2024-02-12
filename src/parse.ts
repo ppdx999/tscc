@@ -31,6 +31,8 @@ export type Node = {
 	val: number | null | undefined;
   name: string | null | undefined;
   offset: number | null | undefined;
+  cond: Node | null | undefined;
+  then: Node | null | undefined;
 };
 
 
@@ -64,9 +66,9 @@ function stmt() {
   } else if (consumeIf()) {
     node = newNode(NodeKind.If);
     expect('(');
-    node.lhs = expr();
+    node.cond = expr();
     expect(')');
-    node.rhs = stmt();
+    node.then = stmt();
     return node;
   } else {
     node = expr();
@@ -232,6 +234,8 @@ function newNode(kind: NodeKind): Node {
 		val: null,
     name: null,
     offset: null,
+    cond: null,
+    then: null,
 	};
 }
 

@@ -56,11 +56,11 @@ export function gen(node: Node | undefined | null): void {
     return;
     case NodeKind.If:
       console.log(`# if -- start`);
-      gen(node.lhs);
+      gen(node.cond);
       console.log('	pop rax');
       console.log('	cmp rax, 0');
       console.log(`	je .Lend${labelseq}`);
-      gen(node.rhs);
+      gen(node.then);
       console.log(`.Lend${labelseq++}:`);
       console.log(`# if -- end`);
       return;
