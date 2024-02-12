@@ -1,10 +1,10 @@
-import { auto, error } from "./util.js";
+import { error } from "./util.js";
 
 export const TokenKind = {
-	Reserved: auto(),
-  Ident: auto(),
-	Num: auto(),
-	EOF: auto(),
+	Reserved: 'Reserved',
+  Ident: 'Ident',
+	Num: 'Num',
+	EOF: 'EOF'
 };
 
 export type TokenKind = typeof TokenKind[keyof typeof TokenKind];
