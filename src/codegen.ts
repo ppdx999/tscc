@@ -43,6 +43,15 @@ export function gen(node: Node | undefined | null): void {
       console.log('	push rdi');
       console.log('# assing exec -- end');
       return;
+    case NodeKind.Return:
+      console.log(`# return -- start`);
+      gen(node.lhs);
+      console.log('	pop rax');
+      console.log('	mov rsp, rbp');
+      console.log('	pop rbp');
+      console.log('	ret');
+      console.log(`# return -- end`);
+    return;
   }
 
 	gen(node.lhs);

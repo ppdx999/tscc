@@ -18,6 +18,7 @@ export const NodeKind = {
   Ne: 'Ne',
   Lt: 'Lt',
   Le: 'Le',
+  Return: 'Return',
 };
 
 type NodeKind = typeof NodeKind[keyof typeof NodeKind];
@@ -51,7 +52,15 @@ export function program() {
 }
 
 function stmt() {
-  const node = expr();
+  let node: Node;
+
+  if (consumeReturn()) {
+    node = newNode(NodeKind.Return);
+    node.lhs = expr();
+  } else {
+   node = expr();
+  }
+
   expect(';');
   return node;
 }
@@ -170,6 +179,13 @@ function consumeIdent(): Token | null | undefined {
   const token = global.token;
   global.token = global.token?.next;
   return token;
+}
+
+function consumeReturn(): boolean {
+  if (global.token?.kind !== TokenKind.Return)
+    return false;
+  global.token = global.token?.next;
+  return true;
 }
 
 function expect(op: string): void {

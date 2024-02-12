@@ -4,7 +4,8 @@ export const TokenKind = {
 	Reserved: 'Reserved',
   Ident: 'Ident',
 	Num: 'Num',
-	EOF: 'EOF'
+	EOF: 'EOF',
+  Return: 'Return',
 };
 
 export type TokenKind = typeof TokenKind[keyof typeof TokenKind];
@@ -29,6 +30,10 @@ function isSpace(char: string | null): boolean {
 
 function isAlphabet(char: string | null): boolean {
   return char !== null && char.match(/[a-zA-Z]/) !== null;
+}
+
+function isAlnum(char: string | null): boolean {
+  return char !== null && char.match(/[a-zA-Z0-9]/) !== null;
 }
 
 function newToken(kind: TokenKind, cur: Token | null | undefined, str: string, pos: number): Token {
@@ -59,6 +64,12 @@ export function tokenize(str: string): Token | null | undefined {
 			p++;
 			continue;
 		}
+
+    if (str.startsWith('return', p) && !isAlnum(str[p + 6])) {
+      cur = newToken(TokenKind.Return, cur, 'return', p);
+      p += 6;
+      continue;
+    }
 
     if (isAlphabet(str[p])) {
       let ident = '';

@@ -58,4 +58,8 @@ assert 8 'a=3;b=5;a+b;'
 
 assert 8 'foo=3;bar=5;foo+bar;'
 
+assert 3 'return 3;'
+assert 8 'foo=3;bar=5;return foo+bar; 100;'
+
+
 echo OK
