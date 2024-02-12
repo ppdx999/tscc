@@ -33,6 +33,7 @@ export type Node = {
   offset: number | null | undefined;
   cond: Node | null | undefined;
   then: Node | null | undefined;
+  els: Node | null | undefined;
 };
 
 
@@ -69,6 +70,8 @@ function stmt() {
     node.cond = expr();
     expect(')');
     node.then = stmt();
+    if (consume('else'))
+      node.els = stmt();
     return node;
   } else {
     node = expr();
@@ -236,6 +239,7 @@ function newNode(kind: NodeKind): Node {
     offset: null,
     cond: null,
     then: null,
+    els: null,
 	};
 }
 

@@ -56,12 +56,25 @@ export function gen(node: Node | undefined | null): void {
     return;
     case NodeKind.If:
       console.log(`# if -- start`);
-      gen(node.cond);
-      console.log('	pop rax');
-      console.log('	cmp rax, 0');
-      console.log(`	je .Lend${labelseq}`);
-      gen(node.then);
-      console.log(`.Lend${labelseq++}:`);
+      const seq = labelseq++;
+      if (node.els) {
+        gen(node.cond);
+        console.log('	pop rax');
+        console.log('	cmp rax, 0');
+        console.log(`	je .Lelse${seq}`);
+        gen(node.then);
+        console.log(`	jmp .Lend${seq}`);
+        console.log(`.Lelse${seq}:`);
+        gen(node.els);
+        console.log(`.Lend${seq}:`);
+      } else {
+        gen(node.cond);
+        console.log('	pop rax');
+        console.log('	cmp rax, 0');
+        console.log(`	je .Lend${seq}`);
+        gen(node.then);
+        console.log(`.Lend${seq}:`);
+      }
       console.log(`# if -- end`);
       return;
   }
