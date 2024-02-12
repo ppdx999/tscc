@@ -2,6 +2,7 @@ import { auto, error } from "./util.js";
 
 export const TokenKind = {
 	Reserved: auto(),
+  Ident: auto(),
 	Num: auto(),
 	EOF: auto(),
 };
@@ -24,6 +25,10 @@ function isNumber(char: string | null): boolean {
 
 function isSpace(char: string | null): boolean {
 	return char !== null && char === ' ';
+}
+
+function isAlphabet(char: string | null): boolean {
+  return char !== null && char.match(/[a-zA-Z]/) !== null;
 }
 
 function newToken(kind: TokenKind, cur: Token | null | undefined, str: string, pos: number): Token {
@@ -55,6 +60,17 @@ export function tokenize(str: string): Token | null | undefined {
 			continue;
 		}
 
+    if (isAlphabet(str[p])) {
+      let ident = '';
+      let pos = p;
+      while (isAlphabet(str[p])) {
+      ident += str[p];
+      p++;
+      }
+      cur = newToken(TokenKind.Ident, cur, ident, pos);
+      continue;
+    }
+
     if (
       str.startsWith('==', p) ||
       str.startsWith('!=', p) ||
@@ -67,7 +83,7 @@ export function tokenize(str: string): Token | null | undefined {
     }
 
 
-		if (['+', '-', '*', '/', '(', ')', '<', '>'].includes(str[p])) {
+		if (['+', '-', '*', '/', '(', ')', '<', '>', '=', ';'].includes(str[p])) {
 			cur = newToken(TokenKind.Reserved, cur, str[p], p);
 			p++;
 			continue;

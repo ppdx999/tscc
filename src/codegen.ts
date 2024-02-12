@@ -1,16 +1,62 @@
 import { Node, NodeKind } from './parse.js';
+import { error } from './util.js';
+
+const calcOffset = (char: string) => {
+  const idx = char.charCodeAt(0) - 'a'.charCodeAt(0) + 1;
+  return idx * 8;
+}
+  
+
+// Pushes the given node's address to the stack.
+function genLval(node: Node | null | undefined) {
+  if (node?.kind == NodeKind.Lvar) {
+    if (!node.name) throw new Error('node.name is null');
+
+    const offset = calcOffset(node.name);
+    console.log('	mov rax, rbp');
+    console.log(`	sub rax, ${offset}`);
+    console.log('	push rax');
+  }
+}
 
 export function gen(node: Node | undefined | null): void {
 	if (node === null || node === undefined) return;
 
-	if (node.kind === NodeKind.Num) {
-		console.log(`	push ${node.val}`);
-		return;
-	}
+  switch (node.kind) {
+    case NodeKind.Num:
+      console.log(`# num`);
+      console.log(`	push ${node.val}`);
+      return;
+    case NodeKind.Lvar:
+      console.log(`# lvar -- start`);
+      genLval(node);
+      console.log('	pop rax');
+      console.log('	mov rax, [rax]');
+      console.log('	push rax');
+      console.log(`# lvar -- end`);
+      return;
+    case NodeKind.Assign:
+      console.log(`# assign -- start`);
+      console.log('# assign lhs -- start');
+      genLval(node.lhs);
+      console.log('# assign lhs -- end');
+      console.log('# assign rhs -- start');
+      gen(node.rhs);
+      console.log('# assign rhs -- end');
+
+      console.log('# assing exec -- start');
+      console.log('	pop rdi');
+      console.log('	pop rax');
+      console.log('	mov [rax], rdi');
+      console.log('	push rdi');
+      console.log('# assing exec -- end');
+      return;
+  }
 
 	gen(node.lhs);
 	gen(node.rhs);
 
+  console.log(`# ${node.kind} -- start`);
 	console.log('	pop rdi');
 	console.log('	pop rax');
 
@@ -51,4 +97,6 @@ export function gen(node: Node | undefined | null): void {
 	}
 
 	console.log('	push rax');
+
+  console.log(`# ${node.kind} -- end`);
 }

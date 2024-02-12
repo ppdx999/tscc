@@ -1,5 +1,5 @@
-import { auto, error } from "./util.js";
-import { TokenKind } from "./tokenize.js";
+import { error } from "./util.js";
+import { TokenKind, Token } from "./tokenize.js";
 import global from "./global.js";
 
 // ---------------------------------------------------------------------
@@ -7,15 +7,17 @@ import global from "./global.js";
 // ---------------------------------------------------------------------
 
 export const NodeKind = {
-	Add: auto(),
-	Sub: auto(),
-	Mul: auto(),
-	Div: auto(),
-	Num: auto(),
-  Eq: auto(),
-  Ne: auto(),
-  Lt: auto(),
-  Le: auto(),
+	Add: 'Add',
+	Sub: 'Sub',
+	Mul: 'Mul',
+	Div: 'Div',
+  Assign: 'Assign',
+  Lvar: 'Lvar',
+	Num: 'Num',
+  Eq: 'Eq',
+  Ne: 'Ne',
+  Lt: 'Lt',
+  Le: 'Le',
 };
 
 type NodeKind = typeof NodeKind[keyof typeof NodeKind];
@@ -24,33 +26,47 @@ export type Node = {
 	kind: NodeKind;
 	lhs: Node | null | undefined;
 	rhs: Node | null | undefined;
-	val: number;
+	val: number | null | undefined;
+  name: string | null | undefined;
+  offset: number | null | undefined;
 };
 
-
-// ---------------------------------------------------------------------
-// Exports
-// ---------------------------------------------------------------------
-
-export function parse(): Node {
-  return expr();
-}
 
 // ---------------------------------------------------------------------
 // Recursive descent parser
 // ---------------------------------------------------------------------
 
+export function program() {
+  let i = 0;
+  while (!atEOF())
+    global.nodes[i++] = stmt();
+  global.nodes[i] = null;
+}
+
+function stmt() {
+  const node = expr();
+  expect(';');
+  return node;
+}
+
 function expr(): Node {
-  return equality();
+  return assign();
+}
+
+function assign(): Node {
+  let node = equality();
+  if (consume('='))
+    node = newBinary(NodeKind.Assign, node, assign());
+  return node;
 }
 
 function equality(): Node {
   let node = relational();
   for (;;) {
     if (consume('==')) {
-      node = newNode(NodeKind.Eq, node, relational(), 0);
+      node = newBinary(NodeKind.Eq, node, relational());
     } else if (consume('!=')) {
-      node = newNode(NodeKind.Ne, node, relational(), 0);
+      node = newBinary(NodeKind.Ne, node, relational());
     } else {
       return node;
     }
@@ -61,13 +77,13 @@ function relational(): Node {
   let node = add();
   for (;;) {
     if (consume('<')) {
-      node = newNode(NodeKind.Lt, node, add(), 0);
+      node = newBinary(NodeKind.Lt, node, add());
     } else if (consume('<=')) {
-      node = newNode(NodeKind.Le, node, add(), 0);
+      node = newBinary(NodeKind.Le, node, add());
     } else if (consume('>')) {
-      node = newNode(NodeKind.Lt, add(), node, 0);
+      node = newBinary(NodeKind.Lt, add(), node);
     } else if (consume('>=')) {
-      node = newNode(NodeKind.Le, add(), node, 0);
+      node = newBinary(NodeKind.Le, add(), node);
     } else {
       return node;
     }
@@ -78,9 +94,9 @@ function add(): Node {
   let node = mul();
   for (;;) {
     if (consume('+')) {
-      node = newNode(NodeKind.Add, node, mul(), 0);
+      node = newBinary(NodeKind.Add, node, mul());
     } else if (consume('-')) {
-      node = newNode(NodeKind.Sub, node, mul(), 0);
+      node = newBinary(NodeKind.Sub, node, mul());
     } else {
       return node;
     }
@@ -91,9 +107,9 @@ function mul(): Node {
 	let node = unary();
 	for (;;) {
 		if (consume('*')) {
-			node = newNode(NodeKind.Mul, node, unary(), 0);
+			node = newBinary(NodeKind.Mul, node, unary());
 		} else if (consume('/')) {
-			node = newNode(NodeKind.Div, node, unary(), 0);
+			node = newBinary(NodeKind.Div, node, unary());
 		} else {
 			return node;
 		}
@@ -104,7 +120,7 @@ function unary(): Node {
   if (consume('+'))
     return unary();
   if (consume('-'))
-    return newNode(NodeKind.Sub, newNodeNum(0), unary(), 0);
+    return newBinary(NodeKind.Sub, newNum(0), unary());
   return primary();
   }
 
@@ -114,7 +130,11 @@ function primary(): Node {
 		expect(')');
 		return node;
 	}
-	return newNodeNum(expectNum());
+
+  const token = consumeIdent()
+  if(token)
+    return newLvar(token.str)
+	return newNum(expectNum());
 }
 
 
@@ -128,6 +148,15 @@ function consume(op: string): boolean {
 		return false;
 	global.token = global.token?.next;
 	return true;
+}
+
+function consumeIdent(): Token | null | undefined {
+  if (global.token?.kind !== TokenKind.Ident)
+    return null;
+
+  const token = global.token;
+  global.token = global.token?.next;
+  return token;
 }
 
 function expect(op: string): void {
@@ -144,21 +173,36 @@ function expectNum(): number {
 	return value;
 }
 
-function newNode(kind: NodeKind, lhs: Node | null | undefined, rhs: Node | null | undefined, val: number): Node {
+function atEOF(): boolean {
+  return global.token?.kind === TokenKind.EOF;
+}
+
+function newNode(kind: NodeKind): Node {
 	return {
 		kind,
-		lhs,
-		rhs,
-		val
-	};
-}
-
-function newNodeNum(val: number): Node {
-	return {
-		kind: NodeKind.Num,
 		lhs: null,
 		rhs: null,
-		val
+		val: null,
+    name: null,
+    offset: null,
 	};
 }
 
+function newBinary(kind: NodeKind, lhs: Node | null | undefined, rhs: Node | null | undefined): Node {
+  const node = newNode(kind);
+  node.lhs = lhs;
+  node.rhs = rhs;
+  return node;
+}
+
+function newNum(val: number): Node {
+  const node = newNode(NodeKind.Num);
+  node.val = val;
+  return node;
+}
+
+function newLvar(name: string) {
+  const node = newNode(NodeKind.Lvar);
+  node.name = name;
+  return node;
+}
