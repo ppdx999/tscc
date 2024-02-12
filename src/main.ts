@@ -31,8 +31,17 @@ function main(args: string[]): void {
 
   global.userInput = args[0];
 	global.token = tokenize(global.userInput);
-  program();
-  codegen()
+  const prog = program();
+
+  // Assign offset to local variables.
+  let offset = 0;
+  for (let var_ = prog.locals; var_; var_ = var_.next) {
+    offset += 8;
+    var_.offset = offset;
+  }
+  prog.stackSize = offset;
+
+  codegen(prog)
 }
 
 main(process.argv.slice(2));

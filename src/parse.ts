@@ -1,16 +1,28 @@
 import { error } from "./util.js";
-import { TokenKind, Token, NodeKind, Node, Lvar } from "./type.js";
+import { TokenKind, Token, NodeKind, Node, Var, Program } from "./type.js";
 import global from "./global.js";
+
+let locals: Var | null | undefined = null;
 
 // ---------------------------------------------------------------------
 // Recursive descent parser
 // ---------------------------------------------------------------------
 
-export function program() {
-  let i = 0;
-  while (!atEOF())
-    global.nodes[i++] = stmt();
-  global.nodes[i] = null;
+export function program(): Program {
+  locals = null;
+  const head = {next: null} as Node;
+  let cur = head;
+
+  while (!atEOF()) {
+    cur.next = stmt();
+    cur = cur.next;
+  }
+
+  return {
+    node: head.next,
+    locals: locals,
+    stackSize: 0,
+  };
 }
 
 function stmt() {
@@ -122,11 +134,9 @@ function primary(): Node {
 
   const token = consumeIdent()
   if(token) {
-    const node = newNodeLvar(token.str)
-    let lvar = findLvar(token.str);
-    if (!lvar) lvar = newLvar(token.str);
-    node.offset = lvar.offset;
-    return node;
+    let var_ = findVar(token.str);
+    if (!var_) var_ = newVar(token.str);
+    return newNodeVar(var_);
   }
 
 	return newNodeNum(expectNum());
@@ -192,11 +202,11 @@ function newNode(kind: NodeKind): Node {
 		lhs: null,
 		rhs: null,
 		val: null,
-    name: null,
-    offset: null,
+    var: null,
     cond: null,
     then: null,
     els: null,
+    next: null,
 	};
 }
 
@@ -213,25 +223,25 @@ function newNodeNum(val: number): Node {
   return node;
 }
 
-function newNodeLvar(name: string) {
-  const node = newNode(NodeKind.Lvar);
-  node.name = name;
+function newNodeVar(var_: Var): Node {
+  const node = newNode(NodeKind.Var);
+  node.var = var_;
   return node;
 }
 
-function newLvar(name: string): Lvar {
-  const newLvar: Lvar = {
+function newVar(name: string): Var {
+  const var_: Var = {
     name,
-    offset: (global?.locals?.offset ?? 0) + 8,
-    next: global.locals,
+    offset: 0,
+    next: locals,
   };
-  global.locals = newLvar;
-  return newLvar;
+  locals = var_;
+  return var_;
 }
 
-function findLvar(name: string): Lvar | null | undefined {
-  for (let var_ = global.locals; var_; var_ = var_.next) {
-    if (var_.name === name) return var_;
-  }
+function findVar(name: string): Var | null | undefined {
+  for (let var_ = locals; var_; var_ = var_.next)
+    if (var_.name === name)
+      return var_;
   return null;
 }

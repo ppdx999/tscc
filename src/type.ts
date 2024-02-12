@@ -21,7 +21,7 @@ export const NodeKind = {
 	Mul: 'Mul',
 	Div: 'Div',
   Assign: 'Assign',
-  Lvar: 'Lvar',
+  Var: 'Var',
 	Num: 'Num',
   Eq: 'Eq',
   Ne: 'Ne',
@@ -35,18 +35,24 @@ export type NodeKind = typeof NodeKind[keyof typeof NodeKind];
 
 export type Node = {
 	kind: NodeKind;
+  next: Node | null | undefined;
 	lhs: Node | null | undefined;
 	rhs: Node | null | undefined;
+  var: Var | null | undefined;
 	val: number | null | undefined;
-  name: string | null | undefined;
-  offset: number | null | undefined;
   cond: Node | null | undefined;
   then: Node | null | undefined;
   els: Node | null | undefined;
 };
 
-export type Lvar = {
+export type Var = {
+  next: Var | null | undefined;
   name: string;
   offset: number;
-  next: Lvar | null | undefined;
+}
+
+export type Program = {
+  node: Node | null | undefined;
+  locals: Var | null | undefined;
+  stackSize: number;
 };

@@ -1,18 +1,17 @@
-import { Node, NodeKind } from './type.js';
-import global from "./global.js";
+import { Node, NodeKind, Program } from './type.js';
 
 // Pushes the given node's address to the stack.
-function genLval(node: Node | null | undefined) {
-  if (node?.kind == NodeKind.Lvar) {
-    if (!node.name) throw new Error('node.name is null');
+function genVar(node: Node | null | undefined) {
+  if (node?.kind == NodeKind.Var) {
+    if (!node.var?.name) throw new Error('node.name is null');
 
     console.log('	mov rax, rbp');
-    console.log(`	sub rax, ${node.offset}`);
+    console.log(`	sub rax, ${node.var.offset}`);
     console.log('	push rax');
   }
 }
 
-export function codegen() {
+export function codegen(prog: Program) {
 	console.log('.intel_syntax noprefix');
 	console.log('.global main');
 	console.log('main:');
@@ -20,16 +19,12 @@ export function codegen() {
   console.log('# prologue main -- start')
   console.log('	push rbp');
   console.log('	mov rbp, rsp');
-  console.log(`	sub rsp, ${global.locals?.offset ?? 0}`)
+  console.log(`	sub rsp, ${prog.stackSize}`);
   console.log('# prologue main -- end')
 
-  for (let i = 0; global.nodes[i]; i++) {
-    console.log(`# node ${i} -- start`);
-    gen(global.nodes[i]);
-    
+  for (let node = prog.node; node; node = node.next) {
+    gen(node);
     console.log('	pop rax');
-
-    console.log(`# node ${i} -- end`);
   }
 
   console.log('# epilogue main -- start');
@@ -49,9 +44,9 @@ function gen(node: Node | undefined | null): void {
       console.log(`# num`);
       console.log(`	push ${node.val}`);
       return;
-    case NodeKind.Lvar:
+    case NodeKind.Var:
       console.log(`# lvar -- start`);
-      genLval(node);
+      genVar(node);
       console.log('	pop rax');
       console.log('	mov rax, [rax]');
       console.log('	push rax');
@@ -60,7 +55,7 @@ function gen(node: Node | undefined | null): void {
     case NodeKind.Assign:
       console.log(`# assign -- start`);
       console.log('# assign lhs -- start');
-      genLval(node.lhs);
+      genVar(node.lhs);
       console.log('# assign lhs -- end');
       console.log('# assign rhs -- start');
       gen(node.rhs);
