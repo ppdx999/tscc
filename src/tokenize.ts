@@ -18,10 +18,8 @@ export type Token = {
   pos: number;
 };
 
-const number = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-
 function isNumber(char: string | null): boolean {
-	return char !== null && number.includes(char);
+	return char !== null && char.match(/[0-9]/) !== null;
 }
 
 function isSpace(char: string | null): boolean {
