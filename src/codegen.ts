@@ -11,6 +11,8 @@ function genLval(node: Node | null | undefined) {
   }
 }
 
+let labelseq = 0;
+
 export function gen(node: Node | undefined | null): void {
 	if (node === null || node === undefined) return;
 
@@ -52,6 +54,16 @@ export function gen(node: Node | undefined | null): void {
       console.log('	ret');
       console.log(`# return -- end`);
     return;
+    case NodeKind.If:
+      console.log(`# if -- start`);
+      gen(node.lhs);
+      console.log('	pop rax');
+      console.log('	cmp rax, 0');
+      console.log(`	je .Lend${labelseq}`);
+      gen(node.rhs);
+      console.log(`.Lend${labelseq++}:`);
+      console.log(`# if -- end`);
+      return;
   }
 
 	gen(node.lhs);

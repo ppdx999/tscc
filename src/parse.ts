@@ -19,6 +19,7 @@ export const NodeKind = {
   Lt: 'Lt',
   Le: 'Le',
   Return: 'Return',
+  If: 'If',
 };
 
 type NodeKind = typeof NodeKind[keyof typeof NodeKind];
@@ -57,12 +58,22 @@ function stmt() {
   if (consumeReturn()) {
     node = newNode(NodeKind.Return);
     node.lhs = expr();
+    expect(';');
+    return node;
+  return node;
+  } else if (consumeIf()) {
+    node = newNode(NodeKind.If);
+    expect('(');
+    node.lhs = expr();
+    expect(')');
+    node.rhs = stmt();
+    return node;
   } else {
-   node = expr();
+    node = expr();
+    expect(';');
+    return node;
   }
 
-  expect(';');
-  return node;
 }
 
 function expr(): Node {
@@ -183,6 +194,13 @@ function consumeIdent(): Token | null | undefined {
 
 function consumeReturn(): boolean {
   if (global.token?.kind !== TokenKind.Reserved || global.token?.value !== 'return')
+    return false;
+  global.token = global.token?.next;
+  return true;
+}
+
+function consumeIf(): boolean {
+  if (global.token?.kind !== TokenKind.Reserved || global.token?.value !== 'if')
     return false;
   global.token = global.token?.next;
   return true;

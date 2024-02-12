@@ -61,5 +61,9 @@ assert 8 'foo=3;bar=5;foo+bar;'
 assert 3 'return 3;'
 assert 8 'foo=3;bar=5;return foo+bar; 100;'
 
+assert 3 'if (0) return 2; return 3;'
+assert 2 'if (1) return 2; return 3;'
+
+assert 3 'a=3; b=5; if (a + 1 < b) return a; return b;'
 
 echo OK
