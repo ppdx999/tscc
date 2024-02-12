@@ -34,6 +34,11 @@ function isAlnum(char: string | null): boolean {
   return char !== null && char.match(/[a-zA-Z0-9]/) !== null;
 }
 
+function isKeyword(str: string, p: number, keyword: string): boolean {
+  // !isAlnum is required because keyword is separated by non-alnum
+  return str.startsWith(keyword, p) && !isAlnum(str[p + keyword.length]);
+}
+
 function newToken(kind: TokenKind, cur: Token | null | undefined, str: string, pos: number): Token {
 	const token: Token = {
 		kind,
@@ -63,7 +68,7 @@ export function tokenize(str: string): Token | null | undefined {
 			continue;
 		}
 
-    if (str.startsWith('return', p) && !isAlnum(str[p + 6])) {
+    if (isKeyword(str, p, 'return')) {
       cur = newToken(TokenKind.Return, cur, 'return', p);
       p += 6;
       continue;
