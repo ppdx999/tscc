@@ -1,7 +1,7 @@
 import global from "./global.js";
 import { tokenize } from "./tokenize.js";
 import { program } from "./parse.js";
-import { gen } from "./codegen.js";
+import { codegen } from "./codegen.js";
 
 /*
  * EBNF
@@ -32,32 +32,7 @@ function main(args: string[]): void {
   global.userInput = args[0];
 	global.token = tokenize(global.userInput);
   program();
-	
-	console.log('.intel_syntax noprefix');
-	console.log('.global main');
-	console.log('main:');
-
-  console.log('# prologue main -- start')
-  console.log('	push rbp');
-  console.log('	mov rbp, rsp');
-  console.log(`	sub rsp, ${global.locals?.offset ?? 0}`)
-  console.log('# prologue main -- end')
-
-  for (let i = 0; global.nodes[i]; i++) {
-    console.log(`# node ${i} -- start`);
-    gen(global.nodes[i]);
-    
-    console.log('	pop rax');
-
-    console.log(`# node ${i} -- end`);
-  }
-
-  console.log('# epilogue main -- start');
-  console.log('	mov rsp, rbp');
-  console.log('	pop rbp');
-	console.log('	ret');
-  console.log('# epilogue main -- end');
-
+  codegen()
 }
 
 main(process.argv.slice(2));

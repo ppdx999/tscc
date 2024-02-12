@@ -1,4 +1,5 @@
 import { Node, NodeKind } from './type.js';
+import global from "./global.js";
 
 // Pushes the given node's address to the stack.
 function genLval(node: Node | null | undefined) {
@@ -11,9 +12,36 @@ function genLval(node: Node | null | undefined) {
   }
 }
 
+export function codegen() {
+	console.log('.intel_syntax noprefix');
+	console.log('.global main');
+	console.log('main:');
+
+  console.log('# prologue main -- start')
+  console.log('	push rbp');
+  console.log('	mov rbp, rsp');
+  console.log(`	sub rsp, ${global.locals?.offset ?? 0}`)
+  console.log('# prologue main -- end')
+
+  for (let i = 0; global.nodes[i]; i++) {
+    console.log(`# node ${i} -- start`);
+    gen(global.nodes[i]);
+    
+    console.log('	pop rax');
+
+    console.log(`# node ${i} -- end`);
+  }
+
+  console.log('# epilogue main -- start');
+  console.log('	mov rsp, rbp');
+  console.log('	pop rbp');
+	console.log('	ret');
+  console.log('# epilogue main -- end');
+}
+
 let labelseq = 0;
 
-export function gen(node: Node | undefined | null): void {
+function gen(node: Node | undefined | null): void {
 	if (node === null || node === undefined) return;
 
   switch (node.kind) {
