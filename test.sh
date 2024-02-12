@@ -65,6 +65,7 @@ assert 3 'if (0) return 2; return 3;'
 assert 2 'if(1)return 2;return 3;'
 
 assert 3 'a=3; b=5; if (a + 1 < b) return a; return b;'
+assert 5 'a=3; b=5; if (a + 1 > b) return a; return b;'
 
 assert 3 'if (0) 2; else 3;'
 assert 2 'if (1) 2; else 3;'
