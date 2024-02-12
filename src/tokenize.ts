@@ -1,21 +1,5 @@
 import { error } from "./util.js";
-
-export const TokenKind = {
-	Reserved: 'Reserved',
-  Ident: 'Ident',
-	Num: 'Num',
-	EOF: 'EOF',
-};
-
-export type TokenKind = typeof TokenKind[keyof typeof TokenKind];
-
-export type Token = {
-	kind: TokenKind;
-	value: string;
-	next: Token | null | undefined;
-	str: string;
-  pos: number;
-};
+import { TokenKind, Token } from "./type.js";
 
 function isNumber(char: string | null): boolean {
 	return char !== null && char.match(/[0-9]/) !== null;

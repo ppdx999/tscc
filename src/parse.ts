@@ -1,48 +1,6 @@
 import { error } from "./util.js";
-import { TokenKind, Token } from "./tokenize.js";
+import { TokenKind, Token, NodeKind, Node, Lvar } from "./type.js";
 import global from "./global.js";
-
-// ---------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------
-
-export const NodeKind = {
-	Add: 'Add',
-	Sub: 'Sub',
-	Mul: 'Mul',
-	Div: 'Div',
-  Assign: 'Assign',
-  Lvar: 'Lvar',
-	Num: 'Num',
-  Eq: 'Eq',
-  Ne: 'Ne',
-  Lt: 'Lt',
-  Le: 'Le',
-  Return: 'Return',
-  If: 'If',
-};
-
-type NodeKind = typeof NodeKind[keyof typeof NodeKind];
-
-export type Node = {
-	kind: NodeKind;
-	lhs: Node | null | undefined;
-	rhs: Node | null | undefined;
-	val: number | null | undefined;
-  name: string | null | undefined;
-  offset: number | null | undefined;
-  cond: Node | null | undefined;
-  then: Node | null | undefined;
-  els: Node | null | undefined;
-};
-
-
-export type Lvar = {
-  name: string;
-  offset: number;
-  next: Lvar | null | undefined;
-};
-
 
 // ---------------------------------------------------------------------
 // Recursive descent parser

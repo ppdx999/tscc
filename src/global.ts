@@ -1,5 +1,4 @@
-import type { Token } from './tokenize.js';
-import type { Node, Lvar } from './parse.js';
+import type { Token, Node, Lvar } from './type.js';
 
 let token = null;
 let nodes: Array<Node | null | undefined> = [];

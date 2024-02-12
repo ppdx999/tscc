@@ -1,4 +1,4 @@
-import { Node, NodeKind } from './parse.js';
+import { Node, NodeKind } from './type.js';
 
 // Pushes the given node's address to the stack.
 function genLval(node: Node | null | undefined) {
