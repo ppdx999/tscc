@@ -182,7 +182,7 @@ function consumeIdent(): Token | null | undefined {
 }
 
 function consumeReturn(): boolean {
-  if (global.token?.kind !== TokenKind.Return)
+  if (global.token?.kind !== TokenKind.Reserved || global.token?.value !== 'return')
     return false;
   global.token = global.token?.next;
   return true;

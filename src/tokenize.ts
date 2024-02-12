@@ -5,7 +5,6 @@ export const TokenKind = {
   Ident: 'Ident',
 	Num: 'Num',
 	EOF: 'EOF',
-  Return: 'Return',
 };
 
 export type TokenKind = typeof TokenKind[keyof typeof TokenKind];
@@ -69,7 +68,7 @@ export function tokenize(str: string): Token | null | undefined {
 		}
 
     if (isKeyword(str, p, 'return')) {
-      cur = newToken(TokenKind.Return, cur, 'return', p);
+      cur = newToken(TokenKind.Reserved, cur, 'return', p);
       p += 6;
       continue;
     }
