@@ -28,12 +28,12 @@ export function program(): Program {
 function stmt() {
   let node: Node;
 
-  if (consumeReturn()) {
+  if (consume('return')) {
     node = newNode(NodeKind.Return);
     node.lhs = expr();
     expect(';');
     return node;
-  } else if (consumeIf()) {
+  } else if (consume('if')) {
     node = newNode(NodeKind.If);
     expect('(');
     node.cond = expr();
@@ -162,20 +162,6 @@ function consumeIdent(): Token | null | undefined {
   const token = global.token;
   global.token = global.token?.next;
   return token;
-}
-
-function consumeReturn(): boolean {
-  if (global.token?.kind !== TokenKind.Reserved || global.token?.value !== 'return')
-    return false;
-  global.token = global.token?.next;
-  return true;
-}
-
-function consumeIf(): boolean {
-  if (global.token?.kind !== TokenKind.Reserved || global.token?.value !== 'if')
-    return false;
-  global.token = global.token?.next;
-  return true;
 }
 
 function expect(op: string): void {
