@@ -42,7 +42,15 @@ function stmt() {
     if (consume('else'))
       node.els = stmt();
     return node;
-  } else {
+  } else if (consume('while')) {
+    node = newNode(NodeKind.While);
+    expect('(');
+    node.cond = expr();
+    expect(')');
+    node.then = stmt();
+    return node;
+  }
+  else {
     node = expr();
     expect(';');
     return node;

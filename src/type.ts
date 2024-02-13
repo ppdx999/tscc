@@ -29,6 +29,7 @@ export const NodeKind = {
   Le: 'Le',
   Return: 'Return',
   If: 'If',
+  While: 'While',
 };
 
 export type NodeKind = typeof NodeKind[keyof typeof NodeKind];

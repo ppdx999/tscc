@@ -100,6 +100,19 @@ function gen(node: Node | undefined | null): void {
       }
       console.log(`# if -- end`);
       return;
+    case NodeKind.While:
+      console.log(`# while -- start`);
+      const seq2 = labelseq++;
+      console.log(`.Lbegin${seq2}:`);
+      gen(node.cond);
+      console.log('	pop rax');
+      console.log('	cmp rax, 0');
+      console.log(`	je .Lend${seq2}`);
+      gen(node.then);
+      console.log(`	jmp .Lbegin${seq2}`);
+      console.log(`.Lend${seq2}:`);
+      console.log(`# while -- end`);
+      return;
   }
 
 	gen(node.lhs);

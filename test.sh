@@ -70,4 +70,6 @@ assert 5 'a=3; b=5; if (a + 1 > b) return a; return b;'
 assert 3 'if (0) 2; else 3;'
 assert 2 'if (1) 2; else 3;'
 
+assert 10 'i=0; while(i<10) i=i+1; return i;'
+
 echo OK
