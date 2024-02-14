@@ -113,6 +113,29 @@ function gen(node: Node | undefined | null): void {
       console.log(`.Lend${seq2}:`);
       console.log(`# while -- end`);
       return;
+    case NodeKind.For:
+      console.log(`# for -- start`);
+      const seq3 = labelseq++;
+      if (node.init) {
+        gen(node.init);
+        console.log('	pop rax');
+      }
+      console.log(`.Lbegin${seq3}:`);
+      if (node.cond) {
+        gen(node.cond);
+        console.log('	pop rax');
+        console.log('	cmp rax, 0');
+        console.log(`	je .Lend${seq3}`);
+      }
+      gen(node.then);
+      if (node.inc) {
+        gen(node.inc);
+        console.log('	pop rax');
+      }
+      console.log(`	jmp .Lbegin${seq3}`);
+      console.log(`.Lend${seq3}:`);
+      console.log(`# for -- end`);
+      return;
   }
 
 	gen(node.lhs);

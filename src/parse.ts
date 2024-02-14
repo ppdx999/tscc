@@ -49,6 +49,23 @@ function stmt() {
     expect(')');
     node.then = stmt();
     return node;
+  } else if (consume('for')) {
+    node = newNode(NodeKind.For);
+    expect('(');
+    if (!consume(';')) {
+      node.init = expr();
+      expect(';');
+    }
+    if (!consume(';')) {
+      node.cond = expr();
+      expect(';');
+    }
+    if (!consume(')')) {
+      node.inc = expr();
+      expect(')');
+    }
+    node.then = stmt();
+    return node;
   }
   else {
     node = expr();
@@ -201,6 +218,8 @@ function newNode(kind: NodeKind): Node {
     then: null,
     els: null,
     next: null,
+    init: null,
+    inc: null,
 	};
 }
 

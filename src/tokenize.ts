@@ -75,6 +75,12 @@ export function tokenize(str: string): Token | null | undefined {
       continue;
     }
 
+    if (isKeyword(str, p, 'for')) {
+      cur = newToken(TokenKind.Reserved, cur, 'for', p);
+      p += 3;
+      continue;
+    }
+
     if (isAlphabet(str[p])) {
       let ident = '';
       let pos = p;

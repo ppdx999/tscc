@@ -30,6 +30,7 @@ export const NodeKind = {
   Return: 'Return',
   If: 'If',
   While: 'While',
+  For: 'For',
 };
 
 export type NodeKind = typeof NodeKind[keyof typeof NodeKind];
@@ -44,6 +45,8 @@ export type Node = {
   cond: Node | null | undefined;
   then: Node | null | undefined;
   els: Node | null | undefined;
+  init: Node | null | undefined;
+  inc: Node | null | undefined;
 };
 
 export type Var = {
