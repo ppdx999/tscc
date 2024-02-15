@@ -1,14 +1,27 @@
 import { Node, NodeKind, Program } from './type.js';
 
-// Pushes the given node's address to the stack.
-function genVar(node: Node | null | undefined) {
+function genAddr(node: Node | null | undefined) {
   if (node?.kind == NodeKind.Var) {
     if (!node.var?.name) throw new Error('node.name is null');
-
-    console.log('	mov rax, rbp');
-    console.log(`	sub rax, ${node.var.offset}`);
-    console.log('	push rax');
+    console.log(`  lea rax, [rbp-${node.var.offset}]`);
+    console.log('  push rax');
+    return;
   }
+
+  throw new Error('genAddr: node.kind is not Var');
+}
+
+function load() {
+  console.log('	pop rax');
+  console.log('	mov rax, [rax]');
+  console.log('	push rax');
+}
+
+function store() {
+  console.log('	pop rdi');
+  console.log('	pop rax');
+  console.log('	mov [rax], rdi');
+  console.log('	push rdi');
 }
 
 export function codegen(prog: Program) {
@@ -46,27 +59,14 @@ function gen(node: Node | undefined | null): void {
       return;
     case NodeKind.Var:
       console.log(`# lvar -- start`);
-      genVar(node);
-      console.log('	pop rax');
-      console.log('	mov rax, [rax]');
-      console.log('	push rax');
+      genAddr(node);
+      load();
       console.log(`# lvar -- end`);
       return;
     case NodeKind.Assign:
-      console.log(`# assign -- start`);
-      console.log('# assign lhs -- start');
-      genVar(node.lhs);
-      console.log('# assign lhs -- end');
-      console.log('# assign rhs -- start');
+      genAddr(node.lhs);
       gen(node.rhs);
-      console.log('# assign rhs -- end');
-
-      console.log('# assing exec -- start');
-      console.log('	pop rdi');
-      console.log('	pop rax');
-      console.log('	mov [rax], rdi');
-      console.log('	push rdi');
-      console.log('# assing exec -- end');
+      store();
       return;
     case NodeKind.Return:
       console.log(`# return -- start`);
