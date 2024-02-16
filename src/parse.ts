@@ -67,12 +67,24 @@ function stmt() {
     node.then = stmt();
     return node;
   }
-  else {
-    node = expr();
-    expect(';');
+
+  
+  if (consume('{')) {
+    const head = {next: null} as Node;
+    let cur = head;
+
+    while (!consume('}')) {
+      cur.next = stmt();
+      cur = cur.next;
+    }
+    node = newNode(NodeKind.Block);
+    node.body = head.next;
     return node;
   }
 
+  node = expr();
+  expect(';');
+  return node;
 }
 
 function expr(): Node {
@@ -220,6 +232,7 @@ function newNode(kind: NodeKind): Node {
     next: null,
     init: null,
     inc: null,
+    body: null,
 	};
 }
 

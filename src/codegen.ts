@@ -136,6 +136,13 @@ function gen(node: Node | undefined | null): void {
       console.log(`.Lend${seq3}:`);
       console.log(`# for -- end`);
       return;
+    case NodeKind.Block:
+      let n: Node | undefined | null = node;
+      for (n = node.body; n; n = n.next) {
+        gen(n);
+        console.log('	pop rax');
+      }
+      return;
   }
 
 	gen(node.lhs);

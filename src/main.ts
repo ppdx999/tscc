@@ -7,6 +7,7 @@ import { codegen } from "./codegen.js";
  * EBNF
  *   program    = stmt*
  *   stmt       = expr ";"
+ *              | "{" stmt* "}"
  *              | "return" expr ";"
  *              | "if" "(" expr ")" stmt ( "else" stmt )?
  *              | "while" "(" expr ")" stmt
