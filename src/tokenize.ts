@@ -84,7 +84,7 @@ export function tokenize(str: string): Token | null | undefined {
     if (isAlphabet(str[p])) {
       let ident = '';
       let pos = p;
-      while (isAlphabet(str[p])) {
+      while (isAlnum(str[p])) {
       ident += str[p];
       p++;
       }

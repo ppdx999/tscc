@@ -32,6 +32,7 @@ export const NodeKind = {
   While: 'While',
   For: 'For',
   Block: 'Block',
+  Funcall: 'Funcall',
 };
 
 export type NodeKind = typeof NodeKind[keyof typeof NodeKind];
@@ -49,6 +50,7 @@ export type Node = {
   init: Node | null | undefined;
   inc: Node | null | undefined;
   body: Node | null | undefined;
+  funcname: string | null | undefined;
 };
 
 export type Var = {

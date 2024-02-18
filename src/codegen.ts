@@ -68,6 +68,10 @@ function gen(node: Node | undefined | null): void {
       gen(node.rhs);
       store();
       return;
+    case NodeKind.Funcall:
+      console.log(`	call ${node.funcname}`);
+      console.log('	push rax');
+      return;
     case NodeKind.Return:
       console.log(`# return -- start`);
       gen(node.lhs);

@@ -171,6 +171,13 @@ function primary(): Node {
 
   const token = consumeIdent()
   if(token) {
+    if (consume('(')) {
+      expect(')');
+      const node = newNode(NodeKind.Funcall);
+      node.funcname = token.str;
+      return node;
+    }
+
     let var_ = findVar(token.str);
     if (!var_) var_ = newVar(token.str);
     return newNodeVar(var_);
@@ -233,6 +240,7 @@ function newNode(kind: NodeKind): Node {
     init: null,
     inc: null,
     body: null,
+    funcname: null,
 	};
 }
 
