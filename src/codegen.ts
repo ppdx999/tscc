@@ -1,5 +1,7 @@
 import { Node, NodeKind, Program } from './type.js';
 
+const argreg = ['rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9'];
+
 function genAddr(node: Node | null | undefined) {
   if (node?.kind == NodeKind.Var) {
     if (!node.var?.name) throw new Error('node.name is null');
@@ -69,6 +71,16 @@ function gen(node: Node | undefined | null): void {
       store();
       return;
     case NodeKind.Funcall:
+      let nargs = 0;
+      for (let arg = node.args; arg; arg = arg.next) {
+        gen(arg);
+        nargs++;
+      }
+
+      for (let i = nargs - 1; i >= 0; i--) {
+        console.log(`	pop ${argreg[i]}`);
+      }
+
       console.log(`	call ${node.funcname}`);
       console.log('	push rax');
       return;

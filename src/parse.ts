@@ -172,9 +172,9 @@ function primary(): Node {
   const token = consumeIdent()
   if(token) {
     if (consume('(')) {
-      expect(')');
       const node = newNode(NodeKind.Funcall);
       node.funcname = token.str;
+      node.args = funcargs();
       return node;
     }
 
@@ -184,6 +184,19 @@ function primary(): Node {
   }
 
 	return newNodeNum(expectNum());
+}
+
+function funcargs(): Node | null | undefined {
+  if (consume(')'))
+    return null;
+  const head = assign();
+  let cur = head;
+  while (consume(',')) {
+    cur.next = assign();
+    cur = cur.next;
+  }
+  expect(')');
+  return head;
 }
 
 
@@ -241,6 +254,7 @@ function newNode(kind: NodeKind): Node {
     inc: null,
     body: null,
     funcname: null,
+    args: null,
 	};
 }
 

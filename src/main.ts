@@ -19,7 +19,8 @@ import { codegen } from "./codegen.js";
  *   add        = mul ("+" mul | "-" mul)*
  *   mul        = primary ("*" primary | "/" primary)*
  *   unary      = "+"? primary | "-" primary
- *   primary    = num | ident ("(" ")")? | "(" expr ")"
+ *   primary    = num | ident funcargs? | "(" expr ")"
+ *   funcargs   = "(" (assign ("," assign)*)? ")"
  *   ident      = [a-zA-Z_][a-zA-Z0-9_]*
  *   num        = [0-9]+
  */

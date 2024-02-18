@@ -51,6 +51,7 @@ export type Node = {
   inc: Node | null | undefined;
   body: Node | null | undefined;
   funcname: string | null | undefined;
+  args: Node | null | undefined;
 };
 
 export type Var = {
