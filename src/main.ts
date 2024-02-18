@@ -36,12 +36,14 @@ function main(args: string[]): void {
   const prog = program();
 
   // Assign offset to local variables.
-  let offset = 0;
-  for (let var_ = prog.locals; var_; var_ = var_.next) {
-    offset += 8;
-    var_.offset = offset;
+  for (let func = prog; func; func = func.next) {
+    let offset = 0;
+    for (let var_ = func.locals; var_; var_ = var_.next) {
+      offset += 8;
+      var_.offset = offset;
+    }
+    func.stackSize = offset;
   }
-  prog.stackSize = offset;
 
   codegen(prog)
 }

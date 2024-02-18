@@ -1,5 +1,5 @@
 import { error } from "./util.js";
-import { TokenKind, Token, NodeKind, Node, Var, Program } from "./type.js";
+import { TokenKind, Token, NodeKind, Node, Var, Func } from "./type.js";
 import global from "./global.js";
 
 let locals: Var | null | undefined = null;
@@ -8,19 +8,40 @@ let locals: Var | null | undefined = null;
 // Recursive descent parser
 // ---------------------------------------------------------------------
 
-export function program(): Program {
-  locals = null;
-  const head = {next: null} as Node;
+
+export function program(): Func | null | undefined {
+  const head = {next: null} as Func;
   let cur = head;
 
   while (!atEOF()) {
+    cur.next = func();
+    cur = cur.next;
+  }
+
+  return head.next
+}
+
+export function func(): Func {
+  locals = null;
+
+  const name = expectIdent();
+  expect('(');
+  expect(')');
+  expect('{');
+
+  const head = {next: null} as Node;
+  let cur = head;
+
+  while (!consume('}')) {
     cur.next = stmt();
     cur = cur.next;
   }
 
   return {
+    next: null,
+    name,
     node: head.next,
-    locals: locals,
+    locals,
     stackSize: 0,
   };
 }
@@ -233,6 +254,14 @@ function expectNum(): number {
 	const value = parseInt(global.token?.value as string);
 	global.token = global.token?.next;
 	return value;
+}
+
+function expectIdent(): string {
+  if (global.token?.kind !== TokenKind.Ident)
+    error('Expected identifier');
+  const value = global.token?.value;
+  global.token = global.token?.next;
+  return value as string;
 }
 
 function atEOF(): boolean {

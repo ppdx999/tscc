@@ -60,7 +60,9 @@ export type Var = {
   offset: number;
 }
 
-export type Program = {
+export type Func = {
+  next: Func | null | undefined;
+  name: string;
   node: Node | null | undefined;
   locals: Var | null | undefined;
   stackSize: number;

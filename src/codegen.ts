@@ -1,4 +1,7 @@
-import { Node, NodeKind, Program } from './type.js';
+import { Node, NodeKind, Func } from './type.js';
+
+let labelseq = 0;
+let funcname: string | null = null;
 
 const argreg = ['rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9'];
 
@@ -26,30 +29,31 @@ function store() {
   console.log('	push rdi');
 }
 
-export function codegen(prog: Program) {
-	console.log('.intel_syntax noprefix');
-	console.log('.global main');
-	console.log('main:');
+export function codegen(prog: Func | null | undefined) {
+  console.log('.intel_syntax noprefix');
+  for (let fn = prog; fn; fn = fn.next) {
+    funcname = fn.name;
+    console.log(`.global ${funcname}`);
+    console.log(`${funcname}:`);
 
-  console.log('# prologue main -- start')
-  console.log('	push rbp');
-  console.log('	mov rbp, rsp');
-  console.log(`	sub rsp, ${prog.stackSize}`);
-  console.log('# prologue main -- end')
+    // Prologue
+    console.log('	push rbp');
+    console.log('	mov rbp, rsp');
+    console.log(`	sub rsp, ${fn.stackSize}`);
 
-  for (let node = prog.node; node; node = node.next) {
-    gen(node);
-    console.log('	pop rax');
+    // Emit code
+    for (let node = fn.node; node; node = node.next) {
+      gen(node);
+      console.log('	pop rax');
+    }
+
+    // Epilogue
+    console.log(`.L.return.${funcname}:`);
+    console.log('	mov rsp, rbp');
+    console.log('	pop rbp');
+    console.log('	ret');
   }
-
-  console.log('# epilogue main -- start');
-  console.log('	mov rsp, rbp');
-  console.log('	pop rbp');
-	console.log('	ret');
-  console.log('# epilogue main -- end');
 }
-
-let labelseq = 0;
 
 function gen(node: Node | undefined | null): void {
 	if (node === null || node === undefined) return;
@@ -100,13 +104,9 @@ function gen(node: Node | undefined | null): void {
       console.log('	push rax');
       return;
     case NodeKind.Return:
-      console.log(`# return -- start`);
       gen(node.lhs);
       console.log('	pop rax');
-      console.log('	mov rsp, rbp');
-      console.log('	pop rbp');
-      console.log('	ret');
-      console.log(`# return -- end`);
+      console.log(`	jmp .L.return.${funcname}`);
     return;
     case NodeKind.If:
       console.log(`# if -- start`);
