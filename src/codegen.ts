@@ -8,6 +8,7 @@ const argreg = ['rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9'];
 function genAddr(node: Node | null | undefined) {
   if (node?.kind == NodeKind.Var) {
     if (!node.var?.name) throw new Error('node.name is null');
+    console.log(`  # genAddr: ${node.var.name}`);
     console.log(`  lea rax, [rbp-${node.var.offset}]`);
     console.log('  push rax');
     return;
@@ -17,16 +18,18 @@ function genAddr(node: Node | null | undefined) {
 }
 
 function load() {
-  console.log('	pop rax');
-  console.log('	mov rax, [rax]');
-  console.log('	push rax');
+  console.log('  # load')
+  console.log('  pop rax');
+  console.log('  mov rax, [rax]');
+  console.log('  push rax');
 }
 
 function store() {
-  console.log('	pop rdi');
-  console.log('	pop rax');
-  console.log('	mov [rax], rdi');
-  console.log('	push rdi');
+  console.log('  # store')
+  console.log('  pop rdi');
+  console.log('  pop rax');
+  console.log('  mov [rax], rdi');
+  console.log('  push rdi');
 }
 
 export function codegen(prog: Func | null | undefined) {
@@ -37,9 +40,9 @@ export function codegen(prog: Func | null | undefined) {
     console.log(`${funcname}:`);
 
     // Prologue
-    console.log('	push rbp');
-    console.log('	mov rbp, rsp');
-    console.log(`	sub rsp, ${fn.stackSize}`);
+    console.log('  push rbp');
+    console.log('  mov rbp, rsp');
+    console.log(`  sub rsp, ${fn.stackSize}`);
 
     // Push arguments to the stack
     let i = 0;
@@ -54,19 +57,19 @@ export function codegen(prog: Func | null | undefined) {
 
     // Epilogue
     console.log(`.L.return.${funcname}:`);
-    console.log('	mov rsp, rbp');
-    console.log('	pop rbp');
-    console.log('	ret');
+    console.log('  mov rsp, rbp');
+    console.log('  pop rbp');
+    console.log('  ret');
   }
 }
 
 function gen(node: Node | undefined | null): void {
-	if (node === null || node === undefined) return;
+  if (node === null || node === undefined) return;
 
   switch (node.kind) {
     case NodeKind.Num:
       console.log(`# num`);
-      console.log(`	push ${node.val}`);
+      console.log(`  push ${node.val}`);
       return;
     case NodeKind.Var:
       console.log(`# lvar -- start`);
@@ -87,50 +90,50 @@ function gen(node: Node | undefined | null): void {
       }
 
       for (let i = nargs - 1; i >= 0; i--) {
-        console.log(`	pop ${argreg[i]}`);
+        console.log(`  pop ${argreg[i]}`);
       }
 
       // We need to align RSP to a 16 byte boundary before
       // calling a function because it is an ABI requirement.
       // RAX is set to 0 for variadic function.
       const seq4 = labelseq++;
-      console.log('	mov rax, rsp');
-      console.log('	and rax, 15');
-      console.log('	jnz .Lcall' + seq4);
-      console.log('	mov rax, 0');
-      console.log(`	call ${node.funcname}`);
-      console.log('	jmp .Lend' + seq4);
+      console.log('  mov rax, rsp');
+      console.log('  and rax, 15');
+      console.log('  jnz .Lcall' + seq4);
+      console.log('  mov rax, 0');
+      console.log(`  call ${node.funcname}`);
+      console.log('  jmp .Lend' + seq4);
       console.log('.Lcall' + seq4 + ':');
-      console.log('	sub rsp, 8');
-      console.log('	mov rax, 0');
-      console.log(`	call ${node.funcname}`);
-      console.log('	add rsp, 8');
+      console.log('  sub rsp, 8');
+      console.log('  mov rax, 0');
+      console.log(`  call ${node.funcname}`);
+      console.log('  add rsp, 8');
       console.log('.Lend' + seq4 + ':');
-      console.log('	push rax');
+      console.log('  push rax');
       return;
     case NodeKind.Return:
       gen(node.lhs);
-      console.log('	pop rax');
-      console.log(`	jmp .L.return.${funcname}`);
+      console.log('  pop rax');
+      console.log(`  jmp .L.return.${funcname}`);
     return;
     case NodeKind.If:
       console.log(`# if -- start`);
       const seq = labelseq++;
       if (node.els) {
         gen(node.cond);
-        console.log('	pop rax');
-        console.log('	cmp rax, 0');
-        console.log(`	je .Lelse${seq}`);
+        console.log('  pop rax');
+        console.log('  cmp rax, 0');
+        console.log(`  je .Lelse${seq}`);
         gen(node.then);
-        console.log(`	jmp .Lend${seq}`);
+        console.log(`  jmp .Lend${seq}`);
         console.log(`.Lelse${seq}:`);
         gen(node.els);
         console.log(`.Lend${seq}:`);
       } else {
         gen(node.cond);
-        console.log('	pop rax');
-        console.log('	cmp rax, 0');
-        console.log(`	je .Lend${seq}`);
+        console.log('  pop rax');
+        console.log('  cmp rax, 0');
+        console.log(`  je .Lend${seq}`);
         gen(node.then);
         console.log(`.Lend${seq}:`);
       }
@@ -141,11 +144,11 @@ function gen(node: Node | undefined | null): void {
       const seq2 = labelseq++;
       console.log(`.Lbegin${seq2}:`);
       gen(node.cond);
-      console.log('	pop rax');
-      console.log('	cmp rax, 0');
-      console.log(`	je .Lend${seq2}`);
+      console.log('  pop rax');
+      console.log('  cmp rax, 0');
+      console.log(`  je .Lend${seq2}`);
       gen(node.then);
-      console.log(`	jmp .Lbegin${seq2}`);
+      console.log(`  jmp .Lbegin${seq2}`);
       console.log(`.Lend${seq2}:`);
       console.log(`# while -- end`);
       return;
@@ -154,21 +157,21 @@ function gen(node: Node | undefined | null): void {
       const seq3 = labelseq++;
       if (node.init) {
         gen(node.init);
-        console.log('	pop rax');
+        console.log('  pop rax');
       }
       console.log(`.Lbegin${seq3}:`);
       if (node.cond) {
         gen(node.cond);
-        console.log('	pop rax');
-        console.log('	cmp rax, 0');
-        console.log(`	je .Lend${seq3}`);
+        console.log('  pop rax');
+        console.log('  cmp rax, 0');
+        console.log(`  je .Lend${seq3}`);
       }
       gen(node.then);
       if (node.inc) {
         gen(node.inc);
-        console.log('	pop rax');
+        console.log('  pop rax');
       }
-      console.log(`	jmp .Lbegin${seq3}`);
+      console.log(`  jmp .Lbegin${seq3}`);
       console.log(`.Lend${seq3}:`);
       console.log(`# for -- end`);
       return;
@@ -176,55 +179,55 @@ function gen(node: Node | undefined | null): void {
       let n: Node | undefined | null = node;
       for (n = node.body; n; n = n.next) {
         gen(n);
-        console.log('	pop rax');
+        console.log('  pop rax');
       }
       return;
   }
 
-	gen(node.lhs);
-	gen(node.rhs);
+  gen(node.lhs);
+  gen(node.rhs);
 
   console.log(`# ${node.kind} -- start`);
-	console.log('	pop rdi');
-	console.log('	pop rax');
+  console.log('  pop rdi');
+  console.log('  pop rax');
 
-	switch (node.kind) {
-		case NodeKind.Add:
-			console.log('	add rax, rdi');
-			break;
-		case NodeKind.Sub:
-			console.log('	sub rax, rdi');
-			break;
-		case NodeKind.Mul:
-			console.log('	imul rax, rdi');
-			break;
-		case NodeKind.Div:
-			console.log('	cqo');
-			console.log('	idiv rdi');
-			break;
+  switch (node.kind) {
+    case NodeKind.Add:
+      console.log('  add rax, rdi');
+      break;
+    case NodeKind.Sub:
+      console.log('  sub rax, rdi');
+      break;
+    case NodeKind.Mul:
+      console.log('  imul rax, rdi');
+      break;
+    case NodeKind.Div:
+      console.log('  cqo');
+      console.log('  idiv rdi');
+      break;
     case NodeKind.Eq:
-      console.log('	cmp rax, rdi');
-      console.log('	sete al');
-      console.log('	movzb rax, al');
+      console.log('  cmp rax, rdi');
+      console.log('  sete al');
+      console.log('  movzb rax, al');
       break;
     case NodeKind.Ne:
-      console.log('	cmp rax, rdi');
-      console.log('	setne al');
-      console.log('	movzb rax, al');
+      console.log('  cmp rax, rdi');
+      console.log('  setne al');
+      console.log('  movzb rax, al');
     break;
     case NodeKind.Lt:
-      console.log('	cmp rax, rdi');
-      console.log('	setl al');
-      console.log('	movzb rax, al');
+      console.log('  cmp rax, rdi');
+      console.log('  setl al');
+      console.log('  movzb rax, al');
     break;
     case NodeKind.Le:
-      console.log('	cmp rax, rdi');
-      console.log('	setle al');
-      console.log('	movzb rax, al');
+      console.log('  cmp rax, rdi');
+      console.log('  setle al');
+      console.log('  movzb rax, al');
     break;
-	}
+  }
 
-	console.log('	push rax');
+  console.log('  push rax');
 
   console.log(`# ${node.kind} -- end`);
 }
