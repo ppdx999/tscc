@@ -38,9 +38,9 @@ function main(args: string[]): void {
   // Assign offset to local variables.
   for (let func = prog; func; func = func.next) {
     let offset = 0;
-    for (let var_ = func.locals; var_; var_ = var_.next) {
+    for (let vl = func.locals; vl; vl = vl.next) {
       offset += 8;
-      var_.offset = offset;
+      vl.var && ( vl.var.offset = offset );
     }
     func.stackSize = offset;
   }

@@ -1,8 +1,8 @@
 import { error } from "./util.js";
-import { TokenKind, Token, NodeKind, Node, Var, Func } from "./type.js";
+import { TokenKind, Token, NodeKind, Node, Var, Func, VarList } from "./type.js";
 import global from "./global.js";
 
-let locals: Var | null | undefined = null;
+let locals: VarList | null | undefined = null;
 
 // ---------------------------------------------------------------------
 // Recursive descent parser
@@ -25,8 +25,10 @@ export function func(): Func {
   locals = null;
 
   const name = expectIdent();
+  const func = newFunc(name);
+
   expect('(');
-  expect(')');
+  func.params = funcParams();
   expect('{');
 
   const head = {next: null} as Node;
@@ -37,13 +39,28 @@ export function func(): Func {
     cur = cur.next;
   }
 
-  return {
-    next: null,
-    name,
-    node: head.next,
-    locals,
-    stackSize: 0,
-  };
+  func.node = head.next;
+  func.locals = locals;
+
+  return func;
+}
+
+function funcParams() {
+  if (consume(')'))
+    return null;
+
+  const head = newVarList();
+  head.var = newVar(expectIdent());
+  let cur = head;
+
+  while (!consume(')')) {
+    expect(',');
+    cur.next = newVarList();
+    cur.next.var = newVar(expectIdent());
+    cur = cur.next;
+  }
+
+  return head;
 }
 
 function stmt() {
@@ -306,19 +323,38 @@ function newNodeVar(var_: Var): Node {
   return node;
 }
 
+function newVarList(): VarList {
+  return {var: null, next: null};
+}
+
 function newVar(name: string): Var {
   const var_: Var = {
     name,
     offset: 0,
-    next: locals,
   };
-  locals = var_;
+  const vl = {
+    var: var_,
+    next: locals,
+  }
+  locals = vl;
   return var_;
 }
 
 function findVar(name: string): Var | null | undefined {
-  for (let var_ = locals; var_; var_ = var_.next)
-    if (var_.name === name)
-      return var_;
+  for (let vl = locals; vl; vl = vl.next)
+    if (vl.var?.name === name)
+      return vl.var;
   return null;
 }
+
+function newFunc(name: string): Func {
+  return {
+    name,
+    next: null,
+    node: null,
+    locals: null,
+    params: null,
+    stackSize: 0,
+  };
+}
+

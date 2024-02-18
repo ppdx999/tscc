@@ -55,15 +55,20 @@ export type Node = {
 };
 
 export type Var = {
-  next: Var | null | undefined;
   name: string;
   offset: number;
+}
+
+export type VarList = {
+  next: VarList | null | undefined;
+  var: Var | null | undefined;
 }
 
 export type Func = {
   next: Func | null | undefined;
   name: string;
   node: Node | null | undefined;
-  locals: Var | null | undefined;
+  locals: VarList | null | undefined;
+  params: VarList | null | undefined;
   stackSize: number;
 };

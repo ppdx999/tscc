@@ -41,10 +41,15 @@ export function codegen(prog: Func | null | undefined) {
     console.log('	mov rbp, rsp');
     console.log(`	sub rsp, ${fn.stackSize}`);
 
+    // Push arguments to the stack
+    let i = 0;
+    for (let vl = fn.params; vl; vl = vl.next) {
+      console.log(`  mov [rbp-${vl.var?.offset}], ${argreg[i++]}`);
+    }
+
     // Emit code
     for (let node = fn.node; node; node = node.next) {
       gen(node);
-      console.log('	pop rax');
     }
 
     // Epilogue
