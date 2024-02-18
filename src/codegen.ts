@@ -81,7 +81,22 @@ function gen(node: Node | undefined | null): void {
         console.log(`	pop ${argreg[i]}`);
       }
 
+      // We need to align RSP to a 16 byte boundary before
+      // calling a function because it is an ABI requirement.
+      // RAX is set to 0 for variadic function.
+      const seq4 = labelseq++;
+      console.log('	mov rax, rsp');
+      console.log('	and rax, 15');
+      console.log('	jnz .Lcall' + seq4);
+      console.log('	mov rax, 0');
       console.log(`	call ${node.funcname}`);
+      console.log('	jmp .Lend' + seq4);
+      console.log('.Lcall' + seq4 + ':');
+      console.log('	sub rsp, 8');
+      console.log('	mov rax, 0');
+      console.log(`	call ${node.funcname}`);
+      console.log('	add rsp, 8');
+      console.log('.Lend' + seq4 + ':');
       console.log('	push rax');
       return;
     case NodeKind.Return:
