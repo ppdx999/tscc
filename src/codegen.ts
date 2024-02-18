@@ -6,12 +6,16 @@ let funcname: string | null = null;
 const argreg = ['rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9'];
 
 function genAddr(node: Node | null | undefined) {
-  if (node?.kind == NodeKind.Var) {
-    if (!node.var?.name) throw new Error('node.name is null');
-    console.log(`  # genAddr: ${node.var.name}`);
-    console.log(`  lea rax, [rbp-${node.var.offset}]`);
-    console.log('  push rax');
-    return;
+  switch(node?.kind) {
+    case NodeKind.Var:
+      if (!node.var?.name) throw new Error('node.name is null');
+      console.log(`  # genAddr: ${node.var.name}`);
+      console.log(`  lea rax, [rbp-${node.var.offset}]`);
+      console.log('  push rax');
+      return;
+    case NodeKind.Deref:
+      gen(node.lhs)
+      return;
   }
 
   throw new Error('genAddr: node.kind is not Var');
@@ -81,6 +85,13 @@ function gen(node: Node | undefined | null): void {
       genAddr(node.lhs);
       gen(node.rhs);
       store();
+      return;
+    case NodeKind.Addr:
+      genAddr(node.lhs)
+      return;
+    case NodeKind.Deref:
+      gen(node.lhs)
+      load()
       return;
     case NodeKind.Funcall:
       let nargs = 0;

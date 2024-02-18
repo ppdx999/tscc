@@ -21,6 +21,8 @@ export const NodeKind = {
 	Mul: 'Mul',
 	Div: 'Div',
   Assign: 'Assign',
+  Addr: 'Addr',
+  Deref: 'Deref',
   Var: 'Var',
 	Num: 'Num',
   Eq: 'Eq',

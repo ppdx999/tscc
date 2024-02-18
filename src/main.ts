@@ -18,7 +18,7 @@ import { codegen } from "./codegen.js";
  *   relational = add ("<" add | "<=" add | ">" add | ">=" add)*
  *   add        = mul ("+" mul | "-" mul)*
  *   mul        = primary ("*" primary | "/" primary)*
- *   unary      = "+"? primary | "-" primary
+ *   unary      = "+"? primary | "-" primary | "*" unary | "&" unary
  *   primary    = num | ident funcargs? | "(" expr ")"
  *   funcargs   = "(" (assign ("," assign)*)? ")"
  *   ident      = [a-zA-Z_][a-zA-Z0-9_]*

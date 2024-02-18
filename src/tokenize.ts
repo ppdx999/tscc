@@ -104,7 +104,7 @@ export function tokenize(str: string): Token | null | undefined {
     }
 
 
-		if (['+', '-', '*', '/', '(', ')', '<', '>', '=', ';', '{', '}', ','].includes(str[p])) {
+		if (['+', '-', '*', '/', '(', ')', '<', '>', '=', ';', '{', '}', ',', '&'].includes(str[p])) {
 			cur = newToken(TokenKind.Reserved, cur, str[p], p);
 			p++;
 			continue;

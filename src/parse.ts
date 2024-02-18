@@ -197,6 +197,10 @@ function unary(): Node {
     return unary();
   if (consume('-'))
     return newNodeBinary(NodeKind.Sub, newNodeNum(0), unary());
+  if (consume('&'))
+    return newNodeUnary(NodeKind.Addr, unary());
+  if (consume('*'))
+    return newNodeUnary(NodeKind.Deref, unary());
   return primary();
   }
 
@@ -302,6 +306,12 @@ function newNode(kind: NodeKind): Node {
     funcname: null,
     args: null,
 	};
+}
+
+function newNodeUnary(kind: NodeKind, lhs: Node | null | undefined): Node {
+  const node = newNode(kind);
+  node.lhs = lhs;
+  return node;
 }
 
 function newNodeBinary(kind: NodeKind, lhs: Node | null | undefined, rhs: Node | null | undefined): Node {
